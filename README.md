@@ -12,41 +12,16 @@
 4. Покрыть тестами.
 5. Задеплоить в docker-compose
 
-## Необходимое ПО для запуска и сборки системы:
-* PostgreSQl 13.0
-* Redis 3.2.100
 
-## Инструкция по сборке и установке системы
-1. Создать на сервере базы данных PostgreSQl схему.
-2. В resize_pics/settings.py поправить название бд, логин и пароль.
-3. Запустить redis-server.
-4. В папке с проектом:
-
-    $ python -m venv venv
-    
-    $ source venv/bin/activate
-    
-    $ pip install -r requirements.txt
-    
-    $ python3 manage.py test
-    
-    $ python3 manage.py makemigrations
-    
-    $ python manage.py migrate
-    
-    $ python3 manage.py runserver
-    
-5. Запустить два терминала, активировать вирутальное окружение, затем запустить команды:
-    
-    $ celery -A resize_pics worker -l INFO -Q png
-        
-    $ celery -A resize_pics worker -l INFO -Q jpg
+## Инструкция по запуску
+```bash
+$ cd ~
+$ git clone https://github.com/Afsent/scalling-api.git
+$ cd scalling-api/
+$ docker-compose up -d --build
+$ docker-compose exec web python manage.py migrate
+```
     
 ## Логика работы
 Отправляем POST запрос с картинкой, ей присвается id и в ответном сообщени отправляется пользователю. 
-Для изменения картинки отправляем GET /cat/{id}/{widthXheight}, после чего в двух воркерах обрабатывается изображение и сохраняется под формат PNG и JPEG, далее происходит переадресация на страницу просмотра измененный картинки в другом формате. Если был PNG, то отправляется JPEG и наоборот.
-
-##### Вариант проекта с докером имеет баг в получении пути к загруженному файлу
-Подробнее по ссылке:
-https://github.com/Afsent/scaling-images-api/tree/dev
-# scalling-api
+Для изменения картинки отправляем GET /cat/{id}/{widthXheight}, после чего в двух воркерах обрабатывается изображение и сохраняется под формат PNG и JPEG, далее выдается измененная картинка в другом формате. Если был PNG, то отправляется JPEG и наоборот.
