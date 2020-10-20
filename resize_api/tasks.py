@@ -16,7 +16,7 @@ def get_png(pk, w, h):
     obj = Picture.objects.get(id=pk)
     im = Image.open(io.BytesIO(obj.picture))
     im_resized = im.resize((int(w), int(h)))
-    new_filename = "media/" + "resized.png"
+    new_filename = "data/" + "resized.png"
     im_resized.save(new_filename, "PNG")
     return new_filename
 
@@ -26,6 +26,6 @@ def get_jpg(pk, w, h):
     obj = Picture.objects.get(id=pk)
     im = Image.open(io.BytesIO(obj.picture))
     im_resized = im.resize((int(w), int(h)))
-    new_filename = "media/" + "resized.jpeg"
+    new_filename = "data/" + "resized.jpeg"
     im_resized.save(new_filename, "JPEG")
     return new_filename
