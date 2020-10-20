@@ -22,6 +22,7 @@ $ docker-compose up -d --build
 $ docker-compose exec web python manage.py migrate
 ```
 http://127.0.0.1:8000/cat - отправка POST запроса для передачи изображения
+
 http://127.0.0.1:8000/cat/{id}/{widthXheight} - отправка GET запроса для получения изображения
 
 ## Логика работы
