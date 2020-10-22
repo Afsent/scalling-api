@@ -19,7 +19,6 @@ $ cd ~
 $ git clone https://github.com/Afsent/scalling-api.git
 $ cd scalling-api/
 $ docker-compose up -d --build
-$ docker-compose exec web python manage.py migrate
 ```
 http://127.0.0.1:8000/cat - отправка POST запроса для передачи изображения
 
