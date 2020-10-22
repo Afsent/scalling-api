@@ -1,5 +1,6 @@
 import io
 import os
+import concurrent.futures
 from wsgiref.util import FileWrapper
 
 from PIL import Image
@@ -8,9 +9,12 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from resize_api.tasks import get_png, get_jpg
+from resize_api.tasks import worker_png, worker_jpg
 from .serializers import PictureSerializer
 from .models import Picture
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 class ImageResponse(ModelViewSet):
@@ -20,24 +24,27 @@ class ImageResponse(ModelViewSet):
         try:
             w, h = size.lower().split('x')
         except ValueError:
+            logging.error('Incorrect size in request')
             return Response({"message": "Error. Incorrect size"}, status=400)
 
-        # send tasks to Celery
-        task_png = get_png.delay(pk, w, h)
-        task_jpg = get_jpg.delay(pk, w, h)
+        with concurrent.futures.ThreadPoolExecutor(2) as executor:
+            future_png = executor.submit(worker_png, image, w, h)
+            future_jpg = executor.submit(worker_jpg, image, w, h)
 
-        # get path to file from Celery
-        filepath_jpg = task_jpg.get(timeout=10)
-        filepath_png = task_png.get(timeout=10)
+            return_value_png = future_png.result()
+            return_value_jpg = future_jpg.result()
 
         im = Image.open(io.BytesIO(image.picture))
         if im.format.lower() == 'png':
-            response = HttpResponse(FileWrapper(open(filepath_jpg, 'rb')), content_type='image/jpg')
+            response = HttpResponse(FileWrapper(open(return_value_jpg, 'rb')), content_type='image/jpg')
+            logging.info('Send jpg file')
         else:
-            response = HttpResponse(FileWrapper(open(filepath_png, 'rb')), content_type='image/png')
+            response = HttpResponse(FileWrapper(open(return_value_png, 'rb')), content_type='image/png')
+            logging.info('Send png file')
 
-        os.remove(filepath_jpg)
-        os.remove(filepath_png)
+        os.remove(return_value_jpg)
+        os.remove(return_value_png)
+        logging.info('Remove temporary files')
 
         return response
 

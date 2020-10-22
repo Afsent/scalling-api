@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from resize_api.models import Picture
+from resize_api.tasks import worker_png, worker_jpg
 
 
 class ImageTests(APITestCase):
@@ -39,3 +40,25 @@ class ImageTests(APITestCase):
         url = f'http://localhost:8000/cat/{pk}/{size}'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_worker_png(self):
+        """
+        Ensure we can take a new file with png format.
+        """
+        file = open(self.filepath, 'rb')
+        obj = Picture.objects.create(picture=file.read())
+        w, h = "100", "100"
+        filename = worker_png(obj, w, h)
+        self.assertEqual(filename, "data/resized.png")
+        os.remove(filename)
+
+    def test_worker_jpg(self):
+        """
+        Ensure we can take a new file with jpeg format.
+        """
+        file = open(self.filepath, 'rb')
+        obj = Picture.objects.create(picture=file.read())
+        w, h = "100", "100"
+        filename = worker_jpg(obj, w, h)
+        self.assertEqual(filename, "data/resized.jpeg")
+        os.remove(filename)
