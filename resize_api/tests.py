@@ -1,4 +1,5 @@
 import os
+import time
 
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
@@ -62,3 +63,23 @@ class ImageTests(APITestCase):
         filename = worker_jpg(obj, w, h)
         self.assertEqual(filename, "data/resized.jpeg")
         os.remove(filename)
+
+    def test_big_files(self):
+        """
+        Ensure we can resize big size.
+        """
+        url = 'http://localhost:8000/cat/'
+        data = {'picture': open(self.filepath, 'rb')}
+        r = self.client.post(url, data)
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+        pk, size = 1, '10000X10000'
+        url = f'http://localhost:8000/cat/{pk}/{size}'
+        start = time.time()
+        response = self.client.get(url)
+        response_image = self.client.get(response.url)
+
+        print(f"\nTime to get image = {time.time() - start}\n")
+        self.assertEqual(response_image.status_code, status.HTTP_200_OK)
+        self.assertNotEquals(response_image.status_code, status.HTTP_504_GATEWAY_TIMEOUT)
+        self.assertNotEquals(response_image.status_code, status.HTTP_408_REQUEST_TIMEOUT)
